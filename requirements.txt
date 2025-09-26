@@ -1,0 +1,8 @@
+openai
+python-dotenv
+PyPDF2
+sentence-transformers
+click
+tiktoken
+scikit-learn
+numpy
