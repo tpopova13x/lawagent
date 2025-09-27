@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legal RAG System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8f8f8;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px 0;
+            background: linear-gradient(135deg, #dc143c 0%, #ff1744 100%);
+            color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(220, 20, 60, 0.3);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            height: calc(100vh - 200px);
+        }
+
+        .question-panel {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .answer-panel {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-title {
+            font-size: 1.4em;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #dc143c;
+            border-bottom: 3px solid #dc143c;
+            padding-bottom: 10px;
+        }
+
+        #question {
+            width: 100%;
+            min-height: 120px;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 16px;
+            resize: vertical;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
+        }
+
+        #question:focus {
+            outline: none;
+            border-color: #dc143c;
+            box-shadow: 0 0 0 3px rgba(220, 20, 60, 0.1);
+        }
+
+        .button-container {
+            margin-top: 20px;
+        }
+
+        #askButton {
+            background: linear-gradient(135deg, #dc143c 0%, #ff1744 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            width: 100%;
+        }
+
+        #askButton:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(220, 20, 60, 0.3);
+        }
+
+        #askButton:active {
+            transform: translateY(0);
+        }
+
+        #askButton:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        #answer {
+            flex: 1;
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 20px;
+            font-size: 14px;
+            line-height: 1.8;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            font-family: 'Georgia', serif;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #dc143c;
+            font-style: italic;
+            padding: 20px;
+        }
+
+        .error {
+            color: #e53e3e;
+            background: #fed7d7;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #dc143c;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+        }
+
+        /* Example questions */
+        .examples {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .examples h4 {
+            color: #dc143c;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .example-question {
+            background: #f7fafc;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin: 5px 0;
+            cursor: pointer;
+            font-size: 0.85em;
+            color: #2d3748;
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .example-question:hover {
+            background: #edf2f7;
+            border-color: #cbd5e0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>�🇭 Swiss Legal RAG System</h1>
+            <p>Swiss Legal Document Assistant</p>
+        </div>
+
+        <div class="main-content">
+            <div class="question-panel">
+                <h2 class="panel-title">📝 Ask Your Question</h2>
+                
+                <textarea id="question" placeholder="Enter your legal question here...
+
+Example: What are the homeschooling rules in Vaud?"></textarea>
+
+                <div class="button-container">
+                    <button id="askButton" onclick="askQuestion()">Ask Question</button>
+                </div>
+
+                <div class="examples">
+                    <h4>💡 Example Questions:</h4>
+                    <div class="example-question" onclick="setQuestion(this.textContent)">
+                        What are the homeschooling rules in Vaud?
+                    </div>
+                    <div class="example-question" onclick="setQuestion(this.textContent)">
+                        What type of company should I choose for my startup?
+                    </div>
+                    <div class="example-question" onclick="setQuestion(this.textContent)">
+                        How does the Swiss Civil Procedure Code apply to startups?
+                    </div>
+                </div>
+            </div>
+
+            <div class="answer-panel">
+                <h2 class="panel-title">💬 Answer</h2>
+                
+                <div id="loading" class="loading">
+                    <div class="spinner"></div>
+                    Processing your question...
+                </div>
+                
+                <div id="answer">Your answer will appear here...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function setQuestion(text) {
+            document.getElementById('question').value = text;
+        }
+
+        function askQuestion() {
+            const question = document.getElementById('question').value.trim();
+            
+            if (!question) {
+                alert('Please enter a question');
+                return;
+            }
+
+            // Show loading state
+            const button = document.getElementById('askButton');
+            const loading = document.getElementById('loading');
+            const answer = document.getElementById('answer');
+            
+            button.disabled = true;
+            button.textContent = 'Processing...';
+            loading.style.display = 'block';
+            answer.textContent = '';
+
+            // Send request to backend
+            fetch('/ask', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ question: question })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => Promise.reject(err));
+                }
+                return response.json();
+            })
+            .then(data => {
+                answer.textContent = data.answer;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                answer.innerHTML = `<div class="error">❌ Error: ${error.error || 'Failed to get answer'}</div>`;
+            })
+            .finally(() => {
+                // Reset button state
+                button.disabled = false;
+                button.textContent = 'Ask Question';
+                loading.style.display = 'none';
+            });
+        }
+
+        // Allow Enter to submit (Ctrl+Enter for new line)
+        document.getElementById('question').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.ctrlKey && !e.shiftKey) {
+                e.preventDefault();
+                askQuestion();
+            }
+        });
+    </script>
+</body>
+</html>
